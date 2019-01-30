@@ -1,6 +1,6 @@
 <?php
 
-class AmoCRMAuthentication {
+class AmoAPI {
     
     private static $url;
     
@@ -88,11 +88,11 @@ class AmoCRMAuthentication {
     }
 }
 
-AmoCRMAuthentication::auth('pasha-rogov@yandex.ru', '6b3eedab9d878bbeea81370c17832ce16c8e80bf', 'pasharogov');
+AmoAPI::auth('pasha-rogov@yandex.ru', '6b3eedab9d878bbeea81370c17832ce16c8e80bf', 'pasharogov');
 
-$data = AmoCRMAuthentication::request('/api/v2/account');
+$data = AmoAPI::request('/api/v2/account');
 
 if ($data)
     print_r($data);
 else
-    AmoCRMAuthentication::getErrorInfo(); 
+    AmoAPI::getErrorInfo(); 
