@@ -78,6 +78,8 @@ class AmoAPI {
         $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
         
+        echo 'CODE: ' . $code . ';<br/>';
+        
         if ($code != 200 && $code != 204) {
             self::$errorCode = $code;
             return false;
@@ -86,11 +88,64 @@ class AmoAPI {
             return $response;            
         }
     }
+    
+    public static function get_leads() {
+        return self::request('/api/v2/leads');
+    }
+    
+    public static function get_contacts() {
+        return self::request('/api/v2/contacts');
+    }
+    
+    public static function get_companies() {
+        return self::request('/api/v2/companies');
+    }
+    
+    public static function get_customers() {
+        return self::request('/api/v2/customers');
+    }
+    
+    public static function get_transactions() {
+        return self::request('/api/v2/transactions');
+    }
+    
+    public static function get_customers_periods() {
+        return self::request('/api/v2/customers_periods');
+    }
+    
+    public static function get_tasks() {
+        return self::request('/api/v2/tasks');
+    }
+    
+    public static function get_notes() {
+        return self::request('/api/v2/notes?type=lead');
+    }
+    
+    public static function get_incoming_leads() {
+        return self::request('/api/v2/incoming_leads');
+    }
+    
+    public static function get_incoming_leads_summary() {
+        return self::request('/api/v2/incoming_leads/summary');
+    }
+    
+    public static function get_pipelines() {
+        return self::request('/api/v2/pipelines');
+    }
+    
+    public static function get_webhooks() {
+        return self::request('/api/v2/webhooks');
+    }
+    
+    public static function get_widgets() {
+        return self::request('/api/v2/widgets/list');
+    }
 }
 
 AmoAPI::auth('pasha-rogov@yandex.ru', '6b3eedab9d878bbeea81370c17832ce16c8e80bf', 'pasharogov');
 
-$data = AmoAPI::request('/api/v2/account');
+//$data = AmoAPI::request('/api/v2/account');
+$data = AmoAPI::get_widgets();
 
 if ($data)
     print_r($data);
