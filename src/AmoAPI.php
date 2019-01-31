@@ -1,47 +1,9 @@
 <?php
 
-class AmoObject {
-    
-    public $id;
-    public $name;
-    public $responsible_user_id;
-    public $created_by;
-    public $created_at;
-    public $updated_at;
-    public $account_id;
-    public $custom_fields;
-    
-    function __construct($name) {
-        $this->name = $name;
-    }
-}
+namespace AmoCRM;
 
-class AmoLead extends AmoObject {
-    
-    public $sale;
-    
-    public $customFileds;
-    
-    function __construct($name, $sale = null) {
-        parent::__construct($name);
-        
-        $this->sale = $sale;
-    }
-    
-    // Создаем сделку из массива
-    public static function fromArray($array) {
-        $lead = new self($array['name'], $array['sale']);
-        foreach ($array as $key => $value) {
-            if (property_exists($lead, $key))
-                $lead->$key = $value;
-        }
-        return $lead;
-    }
-    // Формируем из сделки массив для дальнейшей передачи в API
-    public function toArray() {
-        return (array)$this;        
-    }
-}
+require 'AmoObject.php';
+require 'AmoLead.php';
 
 class AmoAPI {
     
@@ -104,7 +66,6 @@ class AmoAPI {
             self::$errorCode = $code;
             return false;
         } else {
-//            echo print_r($response);
             
             $response = json_decode($out, true);
             $response = $response['response'];
@@ -131,8 +92,6 @@ class AmoAPI {
         if ($params != NULL) {
             curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($params));
         }
-        
-        echo self::$url . $query  . '<br/>';
         
         $out = curl_exec($curl);
         $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -198,7 +157,7 @@ class AmoAPI {
         
         return self::request('/api/v2/leads/', 'POST', $params);
     }
-    // Добавление сделки
+    // Редактирование сделки
     public static function updateLead($lead) {
         // Формируем массив входных параметров для запроса
         $params = array(
@@ -210,40 +169,6 @@ class AmoAPI {
         return self::request('/api/v2/leads/', 'POST', $params);
     }
 }
-
-AmoAPI::auth('pasha-rogov@yandex.ru', '6b3eedab9d878bbeea81370c17832ce16c8e80bf', 'pasharogov');
-
-//$lead = new AmoLead('Сделка по продаже!!!!', 3000);
-////
-//$data = AmoAPI::addLead($lead);
-////
-//if ($data) {
-//    echo '<pre>';
-//    print_r($data['_embedded']['items'][0]);
-//    echo '</pre>';
-//}
-//else
-//    AmoAPI::getErrorInfo(); 
-
-$data = AmoAPI::get_leads();
-
-if ($data) {
-    echo '<pre>';
-    print_r($data['_embedded']['items'][0]);
-    echo '</pre>';
-    $lead = AmoLead::fromArray($data['_embedded']['items'][0]);
-    echo '<pre>';
-    
-//    $lead->sale = 700;
-    AmoAPI::updateLead($lead);
-    
-    print_r($lead->toArray());
-    echo '</pre>';
-    
-}
-else
-    AmoAPI::getErrorInfo(); 
-
 
 
 
