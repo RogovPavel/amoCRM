@@ -58,6 +58,8 @@ class AmoAPI {
             self::$errorCode = $code;
             return false;
         } else {
+//            echo print_r($response);
+            
             $response = json_decode($out, true);
             $response = $response['response'];
             
