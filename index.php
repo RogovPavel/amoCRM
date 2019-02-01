@@ -1,25 +1,41 @@
 <?php
 
-ini_set('error_reporting', E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-
 require '/src/AmoAPI.php';
 
+use AmoCRM\AmoAPI;
+use AmoCRM\AmoLead;
 
-AmoCRM\AmoAPI::auth('pasha-rogov@yandex.ru', '6b3eedab9d878bbeea81370c17832ce16c8e80bf', 'pasharogov');
 
-$data = AmoCRM\AmoAPI::get_leads();
+AmoAPI::auth('pasha-rogov@yandex.ru', '6b3eedab9d878bbeea81370c17832ce16c8e80bf', 'pasharogov');
 
-if ($data) {
+// Создаем новую сделку
+$lead = new AmoLead('Сделка по карандашам', 7500);
+// Сохраняем ее в системе
+$res = AmoAPI::addLead($lead);
+
+if ($res) {
+    // Выгружаем ее из системы
+    $url = $res['_embedded']['items'][0]['_links']['self']['href'];
+    $data = AmoAPI::request($url);
+    
+    //Выводим ее до редактирования
     echo '<pre>';
-    print_r($data['_embedded']['items'][0]);
+    print_r($data);
     echo '</pre>';
     
-    $arr = $data['_embedded']['items'][0];
-    $lead = AmoCRM\AmoLead::fromArray($arr);
+    // Делаем сделку из массива  и редактируем ее
+    $lead = AmoLead::fromArray($data['_embedded']['items'][0]);
+    $lead->name = 'Сделка по карандашам';
+    $lead->sale = 12000;
+    AmoAPI::updateLead($lead);
     
-    print_r($lead->getCustomFieldByName(285179));
+    //Выводим ее после редактирования
+    $data = AmoAPI::request($url);
+    echo '<pre>';
+    print_r($data);
+    echo '</pre>';
+    
 }
-else
-    AmoCRM\AmoAPI::getErrorInfo(); 
+
+
+
