@@ -4,27 +4,19 @@ namespace AmoCRM;
 
 class AmoLead extends AmoObject {
     
+    const URL = '/api/v2/leads';
+
+    public $main_contact;
+    public $company;
+    public $closed_at;
+    public $closest_task_at;
+    public $contacts;
+    public $status_id;
     public $sale;
+    public $pipeline;
     
-    function __construct($name, $sale) {
-        parent::__construct($name);
-        
-        $this->sale = $sale;
+    function __construct($data) {
+        parent::__construct($data);
     }
-    
-    // Создаем сделку из массива
-    public static function fromArray($array) {
-        $lead = new self($array['name'], $array['sale']);
-        foreach ($array as $key => $value) {
-            if (property_exists($lead, $key))
-                $lead->$key = $value;
-        }
-        return $lead;
-    }
-    // Формируем из сделки массив для дальнейшей передачи в API
-    public function toArray() {
-        return (array)$this;        
-    }
-    
 }
 

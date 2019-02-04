@@ -17,10 +17,19 @@ class AmoAPI {
         404 => 'Not found',
         500 => 'Internal server error',
         502 => 'Bad gateway',
-        503 => 'Service unavailable'
+        503 => 'Service unavailable',
+        
+        // Ошибки возникающие при работе с сделками
+        213 => 'Добавление сделок: пустой массив',
+        214 => 'Добавление/Обновление сделок: пустой запрос',
+        215 => 'Добавление/Обновление сделок: неверный запрашиваемый метод',
+        216 => 'Обновление сделок: пустой массив',
+        217 => 'Обновление сделок: требуются параметры "id", "updated_at", "status_id", "name"',
+        240 => 'Добавление/Обновление сделок: неверный параметр "id" дополнительного поля',
+        330 => 'Добавление/Обновление сделок: количество привязанных контактов слишком большое'
     );
     
-    private static $errorCode;
+    private static $errorCode = [];
     
     // Устанавливаем default настройки для cURL 
     private static function setDefaultCurlOpt($curl) {
@@ -35,7 +44,10 @@ class AmoAPI {
     
     // Выводим на экран последнюю ошибку
     public static function getErrorInfo() {
-        echo 'Ошибка: '. (isset(self::$errorCodes[self::$errorCode]) ? self::$errorCodes[self::$errorCode] : 'Неизвестная ошибка') . PHP_EOL . 'Код ошибки: ' . self::$errorCode;
+        foreach (self::$errorCode as $key => $value) 
+            echo 'Ошибка: '. (isset(self::$errorCodes[$value]) ? self::$errorCodes[$value] : 'Неизвестная ошибка') . PHP_EOL . 'Код ошибки: ' . $value;
+        
+        echo (count(self::$errorCode) ? '' : 'По запросу данных не найдено');
     }
     
     // Метод авторизации в АМО СРМ, возвращаемый ключ сессии сохраняется в корневом каталоге cookie.txt
@@ -78,37 +90,49 @@ class AmoAPI {
     }
     
     // Метод для отправки запроса API
-    public static function request($query, $type = 'GET', $params = NULL) {
+    public static function request($query, $type = 'GET', $params = array()) {
         
         $curl = curl_init();
         self::setDefaultCurlOpt($curl);
-        curl_setopt($curl, CURLOPT_URL, self::$url . $query);
-        
+                
         if ($type == 'POST') {
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'POST');
             curl_setopt($curl, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
-        }
-        
-        if ($params != NULL) {
             curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($params));
         }
+        
+        if ($type == 'GET') {
+            $query .= (count($params) ? '?' . http_build_query($params) : '');
+        }
+        
+        curl_setopt($curl, CURLOPT_URL, self::$url . $query);
         
         $out = curl_exec($curl);
         $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
         
         if ($code != 200 && $code != 204) {
-            self::$errorCode = $code;
+            self::$errorCode[] = $code;
             return false;
         } else {
             $response = json_decode($out, true);
-            return $response;            
+            
+            if (isset($response['_embedded']['errors'])) {
+                if (isset($response['_embedded']['errors']['update']))
+                    self::$errorCode = array_merge(self::$errorCode, array_column($response['_embedded']['errors']['update'], 'code'));
+                if (isset($response['_embedded']['errors']['add']))
+                    self::$errorCode = array_merge(self::$errorCode, array_column($response['_embedded']['errors']['add'], 'code'));
+                
+                return false;
+            }
+            else    
+                return $response;            
         }
     }
     
     // Загружаем сделки
-    public static function get_leads() {
-        return self::request('/api/v2/leads');
+    public static function get_leads($params = array()) {
+        return self::request(AmoLead::URL, 'GET', $params);
     }
     // Загружаем контакты
     public static function get_contacts() {
