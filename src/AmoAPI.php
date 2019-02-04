@@ -4,6 +4,8 @@ namespace AmoCRM;
 
 require 'AmoObject.php';
 require 'AmoLead.php';
+require 'AmoContact.php';
+require 'AmoCompany.php';
 
 class AmoAPI {
     
@@ -26,7 +28,24 @@ class AmoAPI {
         216 => 'Обновление сделок: пустой массив',
         217 => 'Обновление сделок: требуются параметры "id", "updated_at", "status_id", "name"',
         240 => 'Добавление/Обновление сделок: неверный параметр "id" дополнительного поля',
-        330 => 'Добавление/Обновление сделок: количество привязанных контактов слишком большое'
+        
+        
+        // Ошибки возникающие при работе с контактами
+        201 => 'Добавление контактов: пустой массив',
+        202 => 'Добавление контактов: нет прав',
+        203 => 'Добавление контактов: системная ошибка при работе с дополнительными полями',
+        204 => 'Добавление контактов: дополнительное поле не найдено',
+        205 => 'Добавление контактов: контакт не создан',
+        206 => 'Добавление/Обновление контактов: пустой запрос',
+        207 => 'Добавление/Обновление контактов: неверный запрашиваемый метод',
+        208 => 'Обновление контактов: пустой массив',
+        209 => 'Обновление контактов: требуются параметры "id" и "updated_at"',
+        210 => 'Обновление контактов: системная ошибка при работе с дополнительными полями',
+        211 => 'Обновление контактов: дополнительное поле не найдено',
+        212 => 'Обновление контактов: контакт не обновлён',
+        219 => 'Список контактов: ошибка поиска, повторите запрос позднее',
+        
+        330 => 'Количество привязанных контактов слишком большое',
     );
     
     private static $errorCode = [];
@@ -129,18 +148,21 @@ class AmoAPI {
                 return $response;            
         }
     }
-    
+    // Получаем информацию по аккаунту
+    public static function get_info() {
+        return self::request('/api/v2/account', 'GET', ['with' => 'custom_fields,users,pipelines,groups,note_types,task_types']);
+    }
     // Загружаем сделки
-    public static function get_leads($params = array()) {
+    public static function get_leads($params = []) {
         return self::request(AmoLead::URL, 'GET', $params);
     }
     // Загружаем контакты
-    public static function get_contacts() {
-        return self::request('/api/v2/contacts');
+    public static function get_contacts($params = []) {
+        return self::request(AmoContact::URL, 'GET', $params);
     }
     // Загружаем компании
-    public static function get_companies() {
-        return self::request('/api/v2/companies');
+    public static function get_companies($params = []) {
+        return self::request(AmoCompany::URL, 'GET', $params);
     }
     // Загружаем задачи
     public static function get_tasks() {
@@ -170,27 +192,25 @@ class AmoAPI {
     public static function get_widgets() {
         return self::request('/api/v2/widgets/list');
     }
+    // Добаыление AmoObject в систему
+    public static function addObjects($url, $params) {
+        if (!is_array($params))
+            $params = ['add' => [$params]];
+        else
+            $params = ['add' => $params];
+        
+        return AmoAPI::request($url, 'POST', $params);
+    }
+    
     // Добавление сделки
     public static function addLead($lead) {
         // Формируем массив входных параметров для запроса
-        $params = array(
-            'add' => array(
-                $lead->toArray()
-            )
-        );
-        
-        return self::request('/api/v2/leads/', 'POST', $params);
+        return self::addObjects(AmoLead::URL, $lead);
     }
     // Редактирование сделки
     public static function updateLead($lead) {
         // Формируем массив входных параметров для запроса
-        $params = array(
-            'update' => array(
-                $lead->toArray()
-            )
-        );
-        
-        return self::request('/api/v2/leads/', 'POST', $params);
+        return $lead->update();
     }
 }
 

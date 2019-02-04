@@ -23,7 +23,15 @@ class AmoObject {
             if (property_exists($this, $key))
                 $this->$key = $value;
         }
+        $this->tags = array_column($this->tags, 'name');
     }
+    // Обновляем объект в Amo CRM
+    public function update() {
+        return AmoAPI::request($this::URL, 'POST', [
+            'update' => [(array)$this]
+        ]);
+    }
+    
     // Получаем кастомные поля по их ИД
     public function getCustomFieldByName($params) {
         if (!is_array($params))
@@ -43,10 +51,18 @@ class AmoObject {
         
         return $this->custom_fields[$i];
     }
-    
-    public function update() {
-        return AmoAPI::request($this::URL, 'POST', [
-            'update' => [(array)$this]
-        ]);
+    // Добавляем тег
+    public function addTag($params) {
+        if (!is_array($params))
+            $params = [$params];
+        
+        $this->tags = array_merge($this->tags, $params);
+    }
+    // Удаляем тег
+    public function delTag($params) {
+        if (!is_array($params))
+            $params = [$params];
+        
+        $this->tags = array_diff($this->tags, $params);
     }
 }
