@@ -58,3 +58,22 @@
 ### Методы AmoWebHooks
 
 * нет методов
+
+### Примеры работы
+
+* создание сделки
+  ```$lead = new AmoLead(['name' => 'Новая сделка', 'sale' => 5000]);
+     $lead->save()```
+     
+* редактирование сделки
+  ``` $data = AmoApi::get_leads();
+      if ($data) {
+        $lead = new AmoLead($data['_embedded']['items'][0]);
+        $lead->name = 'Новое имя';
+        $lead->setCustomField([1 => 'value1', 2 => 'value2']);
+        $lead->addTags('newtag');
+        
+        $lead->save();
+      }
+        else
+          AmoApi::getErrorInfo();
