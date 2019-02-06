@@ -1,6 +1,4 @@
-# amoCRM
-
-### Методы AmoAPI
+## Методы AmoAPI
 
 * ```AmoApi::auth($login, $key, $subdomain) ``` - аунтификация в системе, в случае успеха возвращает true иначе false
 * ```AmoApi::request($query, $type = 'GET', $params = array()) ``` - отправка запроса, если запрос вернул ошибку возвращает false
