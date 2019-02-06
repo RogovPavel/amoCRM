@@ -8,22 +8,39 @@ class AmoContact extends AmoObject {
 
     public $company;
     public $leads;
-    public $leads_id = [];
-    public $closest_task_at;
     public $customers;
+    public $closest_task_at;
+    
     
     function __construct($data) {
         parent::__construct($data);
-        
-        if (count($this->leads))
-            $this->leads_id = array_column($this->leads, 'id');
     }
     
-    public function addLead($params) {
-        if (!is_array($params))
-            $params = [$params];
+    function getParams() {
+        $params = [
+            'closest_task_at' => $this->closest_task_at
+        ];
         
-        $this->leads_id = array_merge($this->leads_id, $params);
+        if (count($this->company))
+            $params['company_id'] = $this->company['id'];
+        
+        if (count($this->leads))
+            $params['leads_id'] = $this->leads['id'];
+        
+        if (count($this->customers))
+            $params['customers_id'] = $this->customers['id'];
+        
+        return array_merge(parent::getParams(), $params);
+    }
+    
+    public function addLead($leads) {
+        if (!is_array($leads))
+            $leads = [$leads];
+        
+        if (isset($this->leads['id']))
+            $this->leads['id'] = array_merge($this->contacts['id'], $leads);
+        else 
+            $this->leads['id'] = $leads;
     }
 }
 

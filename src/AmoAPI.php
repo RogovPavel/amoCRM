@@ -6,12 +6,15 @@ require 'AmoObject.php';
 require 'AmoLead.php';
 require 'AmoContact.php';
 require 'AmoCompany.php';
+require 'AmoTask.php';
+require 'AmoNote.php';
+require 'AmoWebHook.php';
 
 class AmoAPI {
     
     private static $url;
     
-    private static $errorCodes = array(
+    private static $errorCodes = [
         301 => 'Moved permanently',
         400 => 'Bad request',
         401 => 'Unauthorized',
@@ -45,8 +48,23 @@ class AmoAPI {
         212 => 'Обновление контактов: контакт не обновлён',
         219 => 'Список контактов: ошибка поиска, повторите запрос позднее',
         
-        330 => 'Количество привязанных контактов слишком большое',
-    );
+        // Ошибки возникающие при работе с задачами
+        227 => 'Добавление задач: пустой массив',
+        228 => 'Добавление/Обновление задач: пустой запрос',
+        229 => 'Добавление/Обновление задач: неверный запрашиваемый метод',
+        230 => 'Обновление задач: пустой массив',
+        231 => 'Обновление задач: задачи не найдены',
+        232 => 'Добавление событий: ID элемента или тип элемента пустые либо неккоректные',
+        233 => 'Добавление событий: по данному ID элемента не найдены некоторые контакты',
+        234 => 'Добавление событий: по данному ID элемента не найдены некоторые сделки',
+        235 => 'Добавление задач: не указан тип элемента',
+        236 => 'Добавление задач: по данному ID элемента не найдены некоторые контакты',
+        237 => 'Добавление задач: по данному ID элемента не найдены некоторые сделки',
+        238 => 'Добавление контактов: отсутствует значение для дополнительного поля',
+        244 => 'Добавление сделок: нет прав',
+        
+        330 => 'Количество привязанных контактов слишком большое'
+    ];
     
     private static $errorCode = [];
     
@@ -165,12 +183,12 @@ class AmoAPI {
         return self::request(AmoCompany::URL, 'GET', $params);
     }
     // Загружаем задачи
-    public static function get_tasks() {
-        return self::request('/api/v2/tasks');
+    public static function get_tasks($params = []) {
+        return self::request(AmoTask::URL, 'GET', $params);
     }
     // Загружаем контакты
-    public static function get_notes() {
-        return self::request('/api/v2/notes?type=lead');
+    public static function get_notes($params = []) {
+        return self::request(AmoNote::URL, 'GET', $params);
     }
     // Загружаем неразобранные сделки
     public static function get_incoming_leads() {
@@ -185,19 +203,29 @@ class AmoAPI {
         return self::request('/api/v2/pipelines');
     }
     // Загружаем WebHooks
-    public static function get_webhooks() {
-        return self::request('/api/v2/webhooks');
+    public static function get_webhooks($params = []) {
+        return self::request(AmoWebHook::URL, 'GET', $params);
     }
     // Загружаем Виджеты
     public static function get_widgets() {
         return self::request('/api/v2/widgets/list');
     }
     // Добаыление AmoObject в систему
-    public static function addObjects($url, $params) {
-        if (!is_array($params))
-            $params = ['add' => [$params]];
-        else
-            $params = ['add' => $params];
+    public static function saveObjects($url, $objects) {
+        if (!is_array($objects))
+            $objects = [$objects];
+        
+        $params = [
+            'add' => [],
+            'update' => []
+        ];    
+        
+        foreach ($objects as $key => $value) {
+            if (isset($value->id))
+                $params['update'][] = $value->getParams();
+            else
+                $params['add'][] = $value->getParams();
+        }
         
         return AmoAPI::request($url, 'POST', $params);
     }
