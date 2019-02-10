@@ -6,6 +6,12 @@ class AmoObject {
     
     const URL = '';
     
+    const CONTACT_TYPE = 1;
+    const LEAD_TYPE = 2;
+    const COMPANY_TYPE = 3;
+    const TASK_TYPE = 4;
+    const CUSTOMER_TYPE = 12;
+    
     public $id;
     public $name;
     public $responsible_user_id;
@@ -20,12 +26,17 @@ class AmoObject {
     
     public $_links;
     
-    function __construct($data) {
-        // Присваиваем полям значения
+    // Заполняет модель значениями из массива
+    function fill($data = []) {
         foreach ($data as $key => $value) {
             if (property_exists($this, $key))
                 $this->$key = $value;
-        }        
+        }
+    }
+    
+    function __construct($data) {
+        // Присваиваем полям значения
+        $this->fill($data);
     }
     // Функция приводит модель к формату для передачи в API
     public function getParams() {
@@ -36,7 +47,7 @@ class AmoObject {
             'created_by' => $this->created_by,
             'created_at' => $this->created_at,
             'updated_by' => $this->updated_by,
-            'updated_at' => $this->updated_at,
+            'updated_at' => isset($this->updated_at) ? $this->updated_at : time(),
             'account_id' => $this->account_id,
             'custom_fields' => $this->custom_fields,
             'group_id' => $this->group_id
@@ -75,12 +86,18 @@ class AmoObject {
     // Устанавливаем значение кастомным полям
     public function setCustomFieldByName($params) {
         foreach ($params as $key => $value) {
-            $field = [
-                'id' => $key,
-                'values' => [
-                    ['value' => $value]
-                ]
-            ];
+            if (is_array($value))
+                $field = [
+                    'id' => $key,
+                    'values' => $value
+                ];
+            else
+                $field = [
+                    'id' => $key,
+                    'values' => [
+                        ['value' => $value]
+                    ]
+                ];
             
             $i = array_search(
                         $key,
@@ -117,5 +134,81 @@ class AmoObject {
         
         $this->tags = array_diff_key($this->tags, array_intersect(array_column($this->tags, 'name'), $tags));
     
+    }
+    
+    // Функция заполняет модель по $id
+    public function getById($id) {
+        $res = AmoAPI::request($this::URL, 'GET', ['id' => $id]);
+        if ($res)
+            $this->fill($res['_embedded']['items'][0]);
+        
+        return $res;
+    }
+    
+    private function getElementType() {
+        switch ($this::URL) {
+            case '/api/v2/contacts':
+                return AmoObject::CONTACT_TYPE;
+                break;
+            case '/api/v2/leads':
+                return AmoObject::LEAD_TYPE;
+                break;
+            case '/api/v2/companies':
+                return AmoObject::COMPANY_TYPE;
+                break;
+            case '/api/v2/tasks':
+                return AmoObject::TASK_TYPE;
+                break;
+            case '/api/v2/customers':
+                return AmoObject::CUSTOMER_TYPE;
+                break;
+            default:
+                return false;
+                break;
+        }
+    }
+    
+    // Добавялем примечание
+    public function addNote($data = []) {
+        // Формируем примечание
+        if (!isset($data['element_id'])) {
+            if (is_null($this->id))
+                return false;
+            else
+                $data['element_id'] = $this->id;
+        }
+        
+        if (!isset($data['element_type']))
+            $data['element_type'] = $this->getElementType();
+            
+        if (!isset($data['note_type']))
+            $data['note_type'] = AmoNote::COMMON_NOTETYPE;
+        
+        $note = new AmoNote($data);
+        
+        echo '<pre>';
+        print_r($note->getParams());
+        echo '</pre>';
+        
+        return $note->save();
+    }
+    
+    public function addTask($data) {
+        // Формируем задачу
+        if (!isset($data['element_id'])) {
+            if (is_null($this->id))
+                return false;
+            else
+                $data['element_id'] = $this->id;
+        }
+        
+        if (!isset($data['element_type']))
+            $data['element_type'] = $this->getElementType();
+            
+        if (!isset($data['task_type']))
+            $data['task_type'] = AmoTask::CALL_TASKTYPE;
+        
+        $task = new AmoTask($data);
+        return $task->save();
     }
 }

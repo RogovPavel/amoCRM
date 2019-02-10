@@ -6,11 +6,6 @@ class AmoTask extends AmoObject {
     
     const URL = '/api/v2/tasks';
 
-    const CONTACT_TYPE = 1;
-    const LEAD_TYPE = 2;
-    const COMPANY_TYPE = 3;
-    const CUSTOMER_TYPE = 12;
-    
     const CALL_TASKTYPE = 1;
     const MEET_TASKTYPE = 2;
     const MAIL_TASKTYPE = 3;

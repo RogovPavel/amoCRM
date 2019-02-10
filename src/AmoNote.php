@@ -16,11 +16,6 @@ class AmoNote extends AmoObject {
     const SMS_IN_NOTETYPE = 102;
     const SMS_OUT_NOTETYPE = 103;
     
-    const CONTACT_TYPE = 1;
-    const LEAD_TYPE = 2;
-    const COMPANY_TYPE = 3;
-    const CUSTOMER_TYPE = 12;
-    
     public $is_editable;
     public $element_id;
     public $element_type;

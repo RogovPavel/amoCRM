@@ -15,6 +15,13 @@ class AmoAPI {
     private static $url;
     
     private static $errorCodes = [
+        101 => 'Аккаунт не найден',
+        102 => 'POST-параметры должны передаваться в формате JSON',
+        103 => 'Параметры не переданы',
+        104 => 'Запрашиваемый метод API не найден',
+        
+        
+        
         301 => 'Moved permanently',
         400 => 'Bad request',
         401 => 'Unauthorized',
@@ -32,6 +39,15 @@ class AmoAPI {
         217 => 'Обновление сделок: требуются параметры "id", "updated_at", "status_id", "name"',
         240 => 'Добавление/Обновление сделок: неверный параметр "id" дополнительного поля',
         
+        // Ошибки возникающие при работе с событиями
+        218 => 'Добавление событий: пустой массив',
+        221 => 'Список событий: требуется тип',
+        226 => 'Добавление событий: элемент события данной сущности не найден',
+        244 => 'Добавление событий: недостаточно прав для добавления события',
+        222 => 'Добавление/Обновление событий: пустой запрос',
+        223 => 'Добавление/Обновление событий: неверный запрашиваемый метод (GET вместо POST)',
+        224 => 'Обновление событий: пустой массив',
+        225 => 'Обновление событий: события не найдены',
         
         // Ошибки возникающие при работе с контактами
         201 => 'Добавление контактов: пустой массив',
@@ -168,7 +184,32 @@ class AmoAPI {
     }
     // Получаем информацию по аккаунту
     public static function get_info() {
-        return self::request('/api/v2/account', 'GET', ['with' => 'custom_fields,users,pipelines,groups,note_types,task_types']);
+        return self::request('/api/v2/account', 'GET');
+//        , ['with' => 'custom_fields,users,pipelines,groups,note_types,task_types']);
+    }
+    // Загружаем информацию по всем кастомным полям
+    public static function get_info_custom_fields() {
+        return self::request('/api/v2/account', 'GET', ['with' => 'custom_fields']);
+    }
+    // Загружаем информацию по всем пользователям
+    public static function get_info_users() {
+        return self::request('/api/v2/account', 'GET', ['with' => 'custom_fields']);
+    }
+    // Загружаем информацию по всем воронкам
+    public static function get_info_pipelines() {
+        return self::request('/api/v2/account', 'GET', ['with' => 'pipelines']);
+    }
+    // Загружаем информацию по всем группам пользователей
+    public static function get_info_groups() {
+        return self::request('/api/v2/account', 'GET', ['with' => 'groups']);
+    }
+    // Загружаем информацию по всем типам дополнительных полей
+    public static function get_info_note_types() {
+        return self::request('/api/v2/account', 'GET', ['with' => 'note_types']);
+    }
+    // Загружаем информацию по всем типам задач
+    public static function get_info_task_types() {
+        return self::request('/api/v2/account', 'GET', ['with' => 'task_types']);
     }
     // Загружаем сделки
     public static function get_leads($params = []) {
@@ -210,24 +251,27 @@ class AmoAPI {
     public static function get_widgets() {
         return self::request('/api/v2/widgets/list');
     }
-    // Добаыление AmoObject в систему
-    public static function saveObjects($url, $objects) {
+    // Добавление AmoObject в систему
+    public static function saveObjects($objects) {
         if (!is_array($objects))
             $objects = [$objects];
         
-        $params = [
-            'add' => [],
-            'update' => []
-        ];    
+        $params = [];    
         
-        foreach ($objects as $key => $value) {
-            if (isset($value->id))
-                $params['update'][] = $value->getParams();
+        array_walk($objects, function($item, $key) use (&$params) {
+            if (isset($item->id))
+                $params[$item::URL]['update'][] = $item->getParams();
             else
-                $params['add'][] = $value->getParams();
+                $params[$item::URL]['add'][] = $item->getParams();
+        });
+        
+        $res = [];
+        
+        foreach ($params as $key => $value) {
+            $res[] = AmoAPI::request($key, 'POST', $value);
         }
         
-        return AmoAPI::request($url, 'POST', $params);
+        return $res;
     }
     
     // Добавление сделки
