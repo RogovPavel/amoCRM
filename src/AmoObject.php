@@ -192,7 +192,7 @@ class AmoObject {
         
         return $note->save();
     }
-    
+    // Добавление задачи
     public function addTask($data) {
         // Формируем задачу
         if (!isset($data['element_id'])) {
@@ -210,5 +210,19 @@ class AmoObject {
         
         $task = new AmoTask($data);
         return $task->save();
+    }
+    
+    // Получаем список кастомных полей ключ => значение
+    public function getArrayFromCustomFields() {
+        $result = [];
+        foreach ($this->custom_fields as $key => $value) {
+            if (count($value['values']) > 1)
+                foreach ($value['values'] as $key2 => $value2) {
+                    $result[$value['id']][] = isset($value2['enum']) ? $value2['enum'] : $value2['value'];
+                }
+            else
+                $result[$value['id']] = isset($value['values'][0]['enum']) ? $value['values'][0]['enum'] : $value['values'][0]['value'];
+        }
+        return $result;
     }
 }
